@@ -46,8 +46,14 @@ class PluginSelfservicedeployConfig extends CommonDBTM
 
     /**
      * Formularz konfiguracji.
+     *
+     * Sygnatura zgodna z CommonDBTM::showForm($ID, array $options) —
+     * w przeciwnym razie PHP zgłasza błąd kompilacji klasy.
+     *
+     * @param integer $ID      ignorowane (konfiguracja globalna)
+     * @param array   $options ignorowane
      */
-    public function showForm()
+    public function showForm($ID = 0, array $options = [])
     {
         $canedit = self::canCreate();
 
