@@ -37,9 +37,14 @@ if (!class_exists('Glpi\Kernel\Kernel', false)) {
     }
 }
 if (class_exists('Glpi\Kernel\Kernel', false) && !isset($GLOBALS['DB'])) {
-    // GLPI 11 — kernel Symfony tworzy globalny $DB
-    $kernel = new \Glpi\Kernel\Kernel(\Glpi\Application\Environment::PRODUCTION->value);
-    $kernel->boot();
+    // GLPI 11 — kernel jak w public/index.php (new Kernel() bez argumentów);
+    // w CLI nie tworzy $DB, ale definiuje stałe (GLPI_CONFIG_DIR itd.)
+    try {
+        $kernel = new \Glpi\Kernel\Kernel();
+        $kernel->boot();
+    } catch (\Throwable $e) {
+        fwrite(STDERR, 'Uwaga: boot kernela GLPI nieudany: ' . $e->getMessage() . "\n");
+    }
 }
 
 include($ssd_glpi_includes);
@@ -47,16 +52,29 @@ require_once(__DIR__ . '/../config.php');
 
 if (!isset($GLOBALS['DB'])) {
     // Wzorzec z instalatora GLPI: include_once(config_db.php) + new DB().
-    // Katalog configu: użyj GLPI_CONFIG_DIR, jeśli kernel go zdefiniował.
-    $ssd_config_dir  = defined('GLPI_CONFIG_DIR') ? GLPI_CONFIG_DIR : ($ssd_glpi_root . '/config');
-    $ssd_config_file = $ssd_config_dir . '/config_db.php';
-    if (!file_exists($ssd_config_file)) {
-        fwrite(STDERR, "Brak pliku konfiguracji bazy: " . $ssd_config_file . "\n");
-        fwrite(
-            STDERR,
-            "GLPI_CONFIG_DIR=" . (defined('GLPI_CONFIG_DIR') ? GLPI_CONFIG_DIR : '(nie zdefiniowany)')
-            . "\n"
-        );
+    // Szukamy config_db.php w znanych lokalizacjach.
+    $ssd_candidates = [];
+    if (defined('GLPI_CONFIG_DIR')) {
+        $ssd_candidates[] = GLPI_CONFIG_DIR . '/config_db.php';
+    }
+    $ssd_candidates[] = $ssd_glpi_root . '/config/config_db.php';
+    $ssd_candidates[] = dirname($ssd_glpi_root) . '/config/config_db.php';
+    $ssd_candidates[] = '/etc/glpi/config_db.php';
+    $ssd_candidates[] = '/etc/glpi/glpi/config_db.php';
+
+    $ssd_config_file = '';
+    foreach ($ssd_candidates as $ssd_c) {
+        if (file_exists($ssd_c)) {
+            $ssd_config_file = $ssd_c;
+            break;
+        }
+    }
+
+    if ($ssd_config_file === '') {
+        fwrite(STDERR, "Nie znaleziono config_db.php (sprawdzono: " . implode(', ', $ssd_candidates) . ")\n");
+        fwrite(STDERR, "Użyj: find / -name config_db.php 2>/dev/null\n");
+    } elseif (!class_exists('DBmysql')) {
+        fwrite(STDERR, "Klasa DBmysql niedostępna (brak vendor/autoload.php?) — nie mogę załadować config_db.php\n");
     } else {
         include_once($ssd_config_file);
         if (class_exists('DB')) {
@@ -69,6 +87,7 @@ if (!isset($GLOBALS['DB'])) {
 if (!isset($GLOBALS['DB'])) {
     fwrite(STDERR, "Nie udało się utworzyć połączenia z bazą GLPI (brak \$DB).\n");
     fwrite(STDERR, "GLPI root: " . $ssd_glpi_root . "\n");
+    fwrite(STDERR, "GLPI_CONFIG_DIR: " . (defined('GLPI_CONFIG_DIR') ? GLPI_CONFIG_DIR : '(nie zdefiniowany)') . "\n");
     exit(1);
 }
 $DB = $GLOBALS['DB'];
