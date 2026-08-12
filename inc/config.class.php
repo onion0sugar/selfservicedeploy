@@ -129,7 +129,15 @@ class PluginSelfservicedeployConfig extends CommonDBTM
 
         if ($canedit) {
             echo '<tr class="tab_bg_2"><td colspan="4" class="center">';
-            Html::submit('Zapisz', ['name' => 'update']);
+            Html::submit(__('Zapisz konfigurację', 'selfservicedeploy'), [
+                'name' => 'update',
+                'icon' => 'ti ti-device-floppy',
+            ]);
+            echo '&nbsp;<small>(' . __('zapis do glpi_configs, context selfservicedeploy', 'selfservicedeploy') . ')</small>';
+            echo '</td></tr>';
+        } else {
+            echo '<tr class="tab_bg_2"><td colspan="4" class="center">';
+            echo '<span class="red">' . __('Brak uprawnień do zapisu konfiguracji (prawo config: UPDATE).', 'selfservicedeploy') . '</span>';
             echo '</td></tr>';
         }
         echo '</table>';

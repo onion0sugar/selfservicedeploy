@@ -11,7 +11,21 @@
  * Token: 256 bitów entropii; w bazie przechowywany wyłącznie SHA-256 hash.
  */
 
-include('../../../../inc/includes.php');
+/**
+ * Bootstrap GLPI — ścieżka liczona od katalogu tego skryptu (__DIR__),
+ * więc komenda działa niezależnie od katalogu, z którego jest wywoływana.
+ */
+$ssd_glpi_includes = dirname(__DIR__, 3) . '/inc/includes.php';
+if (!file_exists($ssd_glpi_includes)) {
+    fwrite(
+        STDERR,
+        'Nie można znaleźć ' . $ssd_glpi_includes . "\n"
+        . 'Uruchom ten skrypt z katalogu <GLPI>/plugins/selfservicedeploy/scripts/ '
+        . "albo sprawdź ścieżkę instalacji GLPI.\n"
+    );
+    exit(1);
+}
+include($ssd_glpi_includes);
 require_once(__DIR__ . '/../config.php');
 
 $args = $argv;

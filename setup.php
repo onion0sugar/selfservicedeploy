@@ -12,7 +12,7 @@
  * osobnej aplikacji.
  */
 
-define('PLUGIN_SELF_SERVICE_DEPLOY_VERSION', '1.2.3');
+define('PLUGIN_SELF_SERVICE_DEPLOY_VERSION', '1.2.5');
 
 /**
  * Plugin init
