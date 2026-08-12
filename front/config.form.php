@@ -16,11 +16,13 @@ if (!isset($_POST['update'])) {
     Html::redirect(Toolbox::getItemTypeFormURL('Config') . '?forcetab=PluginSelfservicedeployConfig$1');
 }
 
-// CSRF — nazwa metody różni się między GLPI 10 (checkCSRFToken) a GLPI 11 (checkCSRF)
+// CSRF — nazwa metody różni się między GLPI 10 (checkCSRFToken) a GLPI 11 (checkCSRF).
+// GLPI 11 zużywa token po walidacji i czyści stare — dlatego preserve_token=true,
+// żeby zapis zadziałał nawet po długo otwartej zakładce / ponownej próbie.
 if (method_exists('Session', 'checkCSRFToken')) {
     Session::checkCSRFToken($_POST);
 } else {
-    Session::checkCSRF($_POST);
+    Session::checkCSRF($_POST, true);
 }
 
 $values = [
