@@ -129,7 +129,8 @@ class PluginSelfservicedeployConfig extends CommonDBTM
 
         if ($canedit) {
             echo '<tr class="tab_bg_2"><td colspan="4" class="center">';
-            Html::submit(__('Zapisz konfigurację', 'selfservicedeploy'), [
+            // UWAGA: Html::submit() ZWRACA HTML (nie wypisuje) — bez echo przycisk znika
+            echo Html::submit(__('Zapisz konfigurację', 'selfservicedeploy'), [
                 'name' => 'update',
                 'icon' => 'ti ti-device-floppy',
             ]);
