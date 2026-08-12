@@ -16,13 +16,19 @@ if (!isset($_POST['update'])) {
     Html::redirect(Toolbox::getItemTypeFormURL('Config') . '?forcetab=PluginSelfservicedeployConfig$1');
 }
 
-// CSRF — nazwa metody różni się między GLPI 10 (checkCSRFToken) a GLPI 11 (checkCSRF).
-// GLPI 11 zużywa token po walidacji i czyści stare — dlatego preserve_token=true,
-// żeby zapis zadziałał nawet po długo otwartej zakładce / ponownej próbie.
-if (method_exists('Session', 'checkCSRFToken')) {
-    Session::checkCSRFToken($_POST);
-} else {
-    Session::checkCSRF($_POST, true);
+// Własna ochrona CSRF (double-submit: cookie == pole formularza).
+// Niezależna od mechaniki tokenów sesji GLPI 11, która potrafi odrzucić
+// zapis (AccessDeniedHttpException) mimo poprawnego formularza.
+$csrf_ok = isset($_COOKIE['ssd_admin_csrf'], $_POST['csrf'])
+    && is_string($_POST['csrf'])
+    && hash_equals($_COOKIE['ssd_admin_csrf'], $_POST['csrf']);
+if (!$csrf_ok) {
+    Session::addMessageAfterRedirect(
+        __('Błąd walidacji CSRF — odśwież zakładkę i spróbuj ponownie.', 'selfservicedeploy'),
+        false,
+        ERROR
+    );
+    Html::back();
 }
 
 $values = [

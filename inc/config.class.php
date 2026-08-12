@@ -57,10 +57,23 @@ class PluginSelfservicedeployConfig extends CommonDBTM
     {
         $canedit = self::canCreate();
 
+        /* --- własny token CSRF (double-submit: cookie == pole formularza) ---
+           Niezależny od mechaniki tokenów sesji GLPI 11 (glpicsrftokens),
+           która potrafi odrzucić zapis (AccessDenied). */
+        $csrf = bin2hex(random_bytes(24));
+        setcookie('ssd_admin_csrf', $csrf, [
+            'expires'  => time() + 1800,
+            'path'     => '/',
+            'httponly' => true,
+            'samesite' => 'Lax',
+            'secure'   => false, // ustaw true, gdy GLPI działa za HTTPS
+        ]);
+
         /* --- informacja o aktualnie skonfigurowanym deploymentcie --- */
         $this->showDeploymentInfo();
 
         echo '<form method="post" action="' . Plugin::getWebDir('selfservicedeploy') . '/front/config.form.php">';
+        echo '<input type="hidden" name="csrf" value="' . htmlspecialchars($csrf) . '">';
         echo '<table class="tab_cadre_fixe">';
         echo '<tr><th colspan="4">' . self::getTypeName() . ' — konfiguracja</th></tr>';
 
