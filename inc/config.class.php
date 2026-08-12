@@ -17,12 +17,12 @@ class PluginSelfservicedeployConfig extends CommonDBTM
         return 'Self Service Deploy';
     }
 
-    public static function canView()
+    public static function canView(): bool
     {
         return Session::haveRight(self::$rightname, READ);
     }
 
-    public static function canCreate()
+    public static function canCreate(): bool
     {
         return Session::haveRight(self::$rightname, UPDATE);
     }
