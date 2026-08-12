@@ -12,10 +12,14 @@
  */
 
 /**
- * Bootstrap GLPI — ścieżka liczona od katalogu tego skryptu (__DIR__),
- * więc komenda działa niezależnie od katalogu, z którego jest wywoływana.
+ * Bootstrap GLPI — kompatybilny z GLPI 10 i GLPI 11.
+ *
+ * GLPI 10: inc/includes.php tworzy globalny $DB i cały kontekst.
+ * GLPI 11: inc/includes.php to tylko shimy — globalny $DB tworzy kernel
+ *          Symfony (jak w tests/bootstrap.php). Bez boota $DB jest null.
  */
-$ssd_glpi_includes = dirname(__DIR__, 3) . '/inc/includes.php';
+$ssd_glpi_root = dirname(__DIR__, 3);
+$ssd_glpi_includes = $ssd_glpi_root . '/inc/includes.php';
 if (!file_exists($ssd_glpi_includes)) {
     fwrite(
         STDERR,
@@ -25,8 +29,37 @@ if (!file_exists($ssd_glpi_includes)) {
     );
     exit(1);
 }
+
+if (!class_exists('Glpi\Kernel\Kernel', false)) {
+    $ssd_autoload = $ssd_glpi_root . '/vendor/autoload.php';
+    if (file_exists($ssd_autoload)) {
+        require_once($ssd_autoload);
+    }
+}
+if (class_exists('Glpi\Kernel\Kernel', false) && !isset($GLOBALS['DB'])) {
+    // GLPI 11 — kernel Symfony tworzy globalny $DB
+    $kernel = new \Glpi\Kernel\Kernel(\Glpi\Application\Environment::PRODUCTION->value);
+    $kernel->boot();
+}
+
 include($ssd_glpi_includes);
 require_once(__DIR__ . '/../config.php');
+
+if (!isset($GLOBALS['DB'])) {
+    // ostateczny fallback: config/config_db.php + new DB()
+    $ssd_config_file = $ssd_glpi_root . '/config/config_db.php';
+    if (file_exists($ssd_config_file)) {
+        include_once($ssd_config_file);
+        if (class_exists('DB')) {
+            $GLOBALS['DB'] = new DB();
+        }
+    }
+}
+if (!isset($GLOBALS['DB'])) {
+    fwrite(STDERR, "Nie udało się utworzyć połączenia z bazą GLPI (brak \$DB).\n");
+    exit(1);
+}
+$DB = $GLOBALS['DB'];
 
 $args = $argv;
 array_shift($args); // nazwa skryptu
