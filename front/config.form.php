@@ -16,7 +16,12 @@ if (!isset($_POST['update'])) {
     Html::redirect(Toolbox::getItemTypeFormURL('Config') . '?forcetab=PluginSelfservicedeployConfig$1');
 }
 
-Session::checkCSRFToken($_POST);
+// CSRF — nazwa metody różni się między GLPI 10 (checkCSRFToken) a GLPI 11 (checkCSRF)
+if (method_exists('Session', 'checkCSRFToken')) {
+    Session::checkCSRFToken($_POST);
+} else {
+    Session::checkCSRF($_POST);
+}
 
 $values = [
     'SSD_DEPLOY_TASKJOB_ID'  => max(0, (int)($_POST['taskjob_id'] ?? 0)),
