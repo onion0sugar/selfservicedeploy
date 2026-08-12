@@ -46,17 +46,29 @@ include($ssd_glpi_includes);
 require_once(__DIR__ . '/../config.php');
 
 if (!isset($GLOBALS['DB'])) {
-    // ostateczny fallback: config/config_db.php + new DB()
-    $ssd_config_file = $ssd_glpi_root . '/config/config_db.php';
-    if (file_exists($ssd_config_file)) {
+    // Wzorzec z instalatora GLPI: include_once(config_db.php) + new DB().
+    // Katalog configu: użyj GLPI_CONFIG_DIR, jeśli kernel go zdefiniował.
+    $ssd_config_dir  = defined('GLPI_CONFIG_DIR') ? GLPI_CONFIG_DIR : ($ssd_glpi_root . '/config');
+    $ssd_config_file = $ssd_config_dir . '/config_db.php';
+    if (!file_exists($ssd_config_file)) {
+        fwrite(STDERR, "Brak pliku konfiguracji bazy: " . $ssd_config_file . "\n");
+        fwrite(
+            STDERR,
+            "GLPI_CONFIG_DIR=" . (defined('GLPI_CONFIG_DIR') ? GLPI_CONFIG_DIR : '(nie zdefiniowany)')
+            . "\n"
+        );
+    } else {
         include_once($ssd_config_file);
         if (class_exists('DB')) {
             $GLOBALS['DB'] = new DB();
+        } else {
+            fwrite(STDERR, "config_db.php istnieje, ale nie definiuje klasy DB\n");
         }
     }
 }
 if (!isset($GLOBALS['DB'])) {
     fwrite(STDERR, "Nie udało się utworzyć połączenia z bazą GLPI (brak \$DB).\n");
+    fwrite(STDERR, "GLPI root: " . $ssd_glpi_root . "\n");
     exit(1);
 }
 $DB = $GLOBALS['DB'];
