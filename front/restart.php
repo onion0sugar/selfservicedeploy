@@ -128,29 +128,16 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
     /* GLPI 11 wymaga _glpi_csrf_token w każdym POST (CheckCsrfListener) —
        token z sesji; dla anonimowych też działa (sesja startuje zawsze). */
     $glpi_csrf = Session::getNewCSRFToken();
-    $label = htmlspecialchars(ssd_cfg_str('SSD_SERVICE_LABEL', 'usługa'));
-    $name  = htmlspecialchars($row['computer_name'] ?: ('computer_' . $computer_id));
     $action = htmlspecialchars('/plugins/selfservicedeploy/front/restart.php?token=' . $token);
+    /* Minimalna strona: tylko przycisk resetu (bez stylów i opisów). */
     echo '<!DOCTYPE html><html lang="pl"><head><meta charset="utf-8">';
     echo '<meta name="viewport" content="width=device-width, initial-scale=1">';
-    echo '<title>Restart usługi</title><style>';
-    echo 'body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;margin:0;min-height:100vh;';
-    echo 'display:flex;align-items:center;justify-content:center;background:#f2f4f8;color:#1c2430}';
-    echo '.card{background:#fff;border-radius:12px;padding:40px 44px;width:min(440px,92vw);';
-    echo 'box-shadow:0 8px 30px rgba(20,30,60,.12);text-align:center}';
-    echo 'h1{font-size:20px;margin:0 0 6px}.computer{color:#41506b;margin:0 0 26px;font-size:15px}';
-    echo '.computer strong{color:#1c2430}button{width:100%;padding:13px 16px;font-size:16px;font-weight:600;';
-    echo 'cursor:pointer;color:#fff;background:#d4382d;border:0;border-radius:8px}';
-    echo 'button:hover{background:#b93229}.hint{margin-top:18px;font-size:12.5px;color:#6b7688}';
-    echo '</style></head><body><div class="card">';
-    echo '<h1>Zrestartuj ' . $label . '</h1>';
-    echo '<p class="computer">Komputer: <strong>' . $name . '</strong></p>';
+    echo '<title>Restart usługi</title></head><body>';
     echo '<form method="post" action="' . $action . '">';
     echo '<input type="hidden" name="csrf" value="' . htmlspecialchars($csrf) . '">';
     echo '<input type="hidden" name="_glpi_csrf_token" value="' . htmlspecialchars($glpi_csrf) . '">';
-    echo '<button type="submit">Zrestartuj usługę</button></form>';
-    echo '<p class="hint">Restart wykona agent GLPI z uprawnieniami usługi systemowej. Operacja jest logowana.</p>';
-    echo '</div></body></html>';
+    echo '<button type="submit">Zrestartuj usługę</button>';
+    echo '</form></body></html>';
     exit;
 }
 
