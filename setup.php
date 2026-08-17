@@ -12,7 +12,7 @@
  * osobnej aplikacji.
  */
 
-define('PLUGIN_SELF_SERVICE_DEPLOY_VERSION', '1.3.3');
+define('PLUGIN_SELF_SERVICE_DEPLOY_VERSION', '1.3.4');
 
 /**
  * Plugin init
@@ -22,6 +22,12 @@ function plugin_init_selfservicedeploy()
     // Załaduj config.php (domyślne wartości + helpery ssd_cfg*) — potrzebne
     // na KAŻDEJ stronie GLPI (zakładka konfiguracji, front/restart.php).
     require_once(__DIR__ . '/config.php');
+
+    global $PLUGIN_HOOKS;
+    // Plugin sam chroni się przed CSRF (double-submit cookie + pole formularza).
+    // GLPI 11 nie konsumuje już tego hooka (CheckCsrfListener działa zawsze),
+    // ale formularze wysyłają też _glpi_csrf_token, więc przechodzą kontrolę.
+    $PLUGIN_HOOKS['csrf_compliant']['selfservicedeploy'] = true;
 
     // Zakładka konfiguracji w Setup → General (Config)
     Plugin::registerClass('PluginSelfservicedeployConfig', ['addtabon' => ['Config']]);

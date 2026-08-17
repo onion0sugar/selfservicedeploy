@@ -125,6 +125,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
         'samesite' => 'Lax',
         'secure'   => ssd_cfg_bool('SSD_COOKIE_SECURE', false),
     ]);
+    /* GLPI 11 wymaga _glpi_csrf_token w każdym POST (CheckCsrfListener) —
+       token z sesji; dla anonimowych też działa (sesja startuje zawsze). */
+    $glpi_csrf = Session::getNewCSRFToken();
     $label = htmlspecialchars(ssd_cfg_str('SSD_SERVICE_LABEL', 'usługa'));
     $name  = htmlspecialchars($row['computer_name'] ?: ('computer_' . $computer_id));
     $action = htmlspecialchars('/plugins/selfservicedeploy/front/restart.php?token=' . $token);
@@ -144,6 +147,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
     echo '<p class="computer">Komputer: <strong>' . $name . '</strong></p>';
     echo '<form method="post" action="' . $action . '">';
     echo '<input type="hidden" name="csrf" value="' . htmlspecialchars($csrf) . '">';
+    echo '<input type="hidden" name="_glpi_csrf_token" value="' . htmlspecialchars($glpi_csrf) . '">';
     echo '<button type="submit">Zrestartuj usługę</button></form>';
     echo '<p class="hint">Restart wykona agent GLPI z uprawnieniami usługi systemowej. Operacja jest logowana.</p>';
     echo '</div></body></html>';
