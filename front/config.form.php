@@ -8,6 +8,10 @@
  */
 
 include('../../../inc/includes.php');
+require_once(__DIR__ . '/../config.php');
+
+// Defensywnie: zapewnij globalny $DB (GLPI 11 bywa go pozbawiony na stronach front)
+ssd_db_ensure();
 
 Session::checkRight('config', UPDATE);
 

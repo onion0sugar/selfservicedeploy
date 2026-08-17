@@ -109,3 +109,42 @@ if (!function_exists('ssd_cfg')) {
         return (string)ssd_cfg($key, $default);
     }
 }
+
+/**
+ * Zapewnia globalne połączenie z bazą GLPI ($DB).
+ *
+ * GLPI 11 nie zawsze tworzy globalny $DB dla stron legacy front
+ * (np. anonimowych) — wtedy inicjalizujemy je z config_db.php,
+ * dokładnie jak w skrypcie CLI (wzorzec z instalatora GLPI).
+ */
+if (!function_exists('ssd_db_ensure')) {
+    function ssd_db_ensure()
+    {
+        global $DB;
+
+        if ($DB instanceof DBmysql) {
+            return $DB;
+        }
+
+        $candidates = [];
+        if (defined('GLPI_CONFIG_DIR')) {
+            $candidates[] = GLPI_CONFIG_DIR . '/config_db.php';
+        }
+        if (defined('GLPI_ROOT')) {
+            $candidates[] = GLPI_ROOT . '/config/config_db.php';
+            $candidates[] = dirname(GLPI_ROOT) . '/config/config_db.php';
+        }
+        $candidates[] = '/etc/glpi/config_db.php';
+
+        foreach ($candidates as $file) {
+            if ($file !== '' && file_exists($file)) {
+                include_once($file);
+                if (class_exists('DB')) {
+                    $DB = new DB();
+                    return $DB;
+                }
+            }
+        }
+        return null;
+    }
+}

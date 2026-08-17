@@ -26,6 +26,16 @@ header('Content-Type: text/html; charset=UTF-8');
 header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: DENY');
 
+/* GLPI 11: anonimowe strony legacy nie zawsze dostają globalny $DB —
+   zapewniamy połączenie z config_db.php (wzorzec jak w skrypcie CLI). */
+$DB = ssd_db_ensure();
+if (!($DB instanceof DBmysql)) {
+    http_response_code(500);
+    header('Content-Type: text/plain; charset=UTF-8');
+    echo 'Błąd konfiguracji: brak połączenia z bazą GLPI (config_db.php nie znaleziony).';
+    exit;
+}
+
 /* ============================================================ helpers */
 
 function ssd_hash_token($plain)
