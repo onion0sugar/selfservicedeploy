@@ -65,6 +65,18 @@ function ssd_log($computer_id, $token_id, $action, $result, $source_ip, $detail 
     ]);
 }
 
+function ssd_page_success()
+{
+    /* Minimalistyczny ekran sukcesu: samo SUKCES. */
+    echo '<!DOCTYPE html><html lang="pl"><head><meta charset="utf-8">';
+    echo '<meta name="viewport" content="width=device-width, initial-scale=1">';
+    echo '<title>SUKCES</title><style>';
+    echo 'body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;';
+    echo 'background:#fff;font-family:system-ui,sans-serif;color:#1e7a45;font-size:36px;font-weight:700}';
+    echo '</style></head><body><div>SUKCES</div></body></html>';
+    exit;
+}
+
 function ssd_page($title, $message, $code = 200)
 {
     http_response_code($code);
@@ -129,14 +141,20 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
        token z sesji; dla anonimowych też działa (sesja startuje zawsze). */
     $glpi_csrf = Session::getNewCSRFToken();
     $action = htmlspecialchars('/plugins/selfservicedeploy/front/restart.php?token=' . $token);
-    /* Minimalna strona: tylko przycisk resetu (bez stylów i opisów). */
+    /* Minimalistyczna strona: tylko przycisk RESETUJ. */
     echo '<!DOCTYPE html><html lang="pl"><head><meta charset="utf-8">';
     echo '<meta name="viewport" content="width=device-width, initial-scale=1">';
-    echo '<title>Restart usługi</title></head><body>';
+    echo '<title>Restart usługi</title><style>';
+    echo 'body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;';
+    echo 'background:#fff;font-family:system-ui,sans-serif}';
+    echo 'button{padding:14px 48px;font-size:18px;font-weight:700;color:#fff;background:#d4382d;';
+    echo 'border:0;border-radius:8px;cursor:pointer}';
+    echo 'button:hover{background:#b93229}';
+    echo '</style></head><body>';
     echo '<form method="post" action="' . $action . '">';
     echo '<input type="hidden" name="csrf" value="' . htmlspecialchars($csrf) . '">';
     echo '<input type="hidden" name="_glpi_csrf_token" value="' . htmlspecialchars($glpi_csrf) . '">';
-    echo '<button type="submit">Zrestartuj usługę</button>';
+    echo '<button type="submit">RESETUJ</button>';
     echo '</form></body></html>';
     exit;
 }
@@ -218,9 +236,8 @@ try {
     ssd_log($computer_id, $token_id, 'restart', 'scheduled', $source_ip,
         'jobstate_ids=' . implode(',', $result['jobstate_ids']));
     $display_name = $row['computer_name'] ?: ('computer_' . $computer_id);
-    ssd_page('Restart został zlecony',
-        'Restart ' . ssd_cfg_str('SSD_SERVICE_LABEL', 'usługa') . ' na komputerze „' . $display_name . '” '
-        . 'został zlecony. Agent GLPI wykona go w ciągu kilku minut.', 200);
+    /* Sukces: minimalny ekran SUKCES */
+    ssd_page_success();
 } finally {
     ssd_db_query('DELETE FROM `glpi_plugin_selfservicedeploy_locks`
                   WHERE `computer_id` = ' . (int)$computer_id);
