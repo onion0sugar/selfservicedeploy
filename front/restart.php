@@ -164,12 +164,24 @@ if (!$csrf_ok) {
     ssd_log($computer_id, $token_id, 'restart', 'invalid_csrf', $source_ip);
     ssd_page('Odmowa', 'Nieprawidłowy token CSRF.', 403);
 }
-if (ssd_cfg_str('SSD_APP_PUBLIC_URL', '') !== '') {
+/* --- 1b. Origin (tylko gdy nagłówek jest obecny; lista adresów z konfiguracji) --- */
+$allowed_origins = array_filter(array_map('trim', explode(',', ssd_cfg_str('SSD_APP_PUBLIC_URL', ''))));
+if (count($allowed_origins) > 0) {
     $origin = $_SERVER['HTTP_ORIGIN'] ?? $_SERVER['HTTP_REFERER'] ?? '';
-    $base   = rtrim(ssd_cfg_str('SSD_APP_PUBLIC_URL', ''), '/');
-    if ($origin === '' || (strpos($origin, $base) !== 0 && $origin !== $base)) {
-        ssd_log($computer_id, $token_id, 'restart', 'invalid_origin', $source_ip);
-        ssd_page('Odmowa', 'Odrzucono żądanie z nieznanego źródła (Origin).', 403);
+    if ($origin !== '') {
+        $origin_ok = false;
+        foreach ($allowed_origins as $base) {
+            $base = rtrim($base, '/');
+            if ($origin === $base || strpos($origin, $base . '/') === 0) {
+                $origin_ok = true;
+                break;
+            }
+        }
+        if (!$origin_ok) {
+            ssd_log($computer_id, $token_id, 'restart', 'invalid_origin', $source_ip,
+                'origin=' . $origin);
+            ssd_page('Odmowa', 'Odrzucono żądanie z nieznanego źródła (Origin).', 403);
+        }
     }
 }
 
